@@ -27,6 +27,7 @@ const question = util.promisify(rl.question).bind(rl);
 // };
 
 let pointer = tree;
+let fileWritingEnabled = true;
 
 const go = async () => {
 	const allWords = (await readFile(wordlistFile, {encoding: 'utf8'})).split("\n");
@@ -48,32 +49,11 @@ const go = async () => {
 
 		let winningScores;
 
-		// go through every possible guess, pairing with every possible remaining word
+		// go through every possible guess, pairing with every possible remaining word.
 		// for each above combo, score it, then find the guess with the best spread (that will
 		// yield the most possible information on average) measured by RMS.
 		words.some(possibleGuess => {
-			// scores will be a map of score result => array of possible answers 
-			// like 
-			// 	00000 => [apple, coats]
-			// 	0p0l0 => [fungi]
-			// 	ppp00 => [hears, heads, heath]
-			const scores = new Map();
-
-			possibleAnswers.forEach(possibleAnswer => {
-				const score = scoreGuess(possibleGuess, possibleAnswer);
-
-				// uncomment if you want to follow along
-				// process.stdout.write(`\r${possibleGuess} vs ${possibleAnswer}, score: ${score}`)
-
-				if (scores.has(score)) {
-					scores.set(score, [...scores.get(score), possibleAnswer]);
-				}
-				else {
-					scores.set(score, [possibleAnswer]);
-				}
-			})
-
-			const rms = calculateRMS(scores);
+			const {rms, scores} = getFitness(possibleGuess, possibleAnswers);
 
 			if (!pointer.rms) {
 				pointer.rms = rms;
@@ -94,9 +74,19 @@ const go = async () => {
 
 		console.log("\r");
 
-		const result = await promptForInput("What was the result? ");
-		if (winningScores.has(result)) {
+		const actualGuess = await promptForInput(`What's your guess? ([enter] for ${pointer.bestGuess}) `) || pointer.bestGuess;
 
+		let scoresToUse = winningScores;
+		if (actualGuess !== pointer.bestGuess) {
+			fileWritingEnabled = false;
+
+			const {rms, scores} = getFitness(actualGuess, possibleAnswers);
+			console.log(`${actualGuess} has a fitness of [${rms}]`);
+			scoresToUse = scores;
+		}
+
+		const result = await promptForInput(`What was the result for ${actualGuess}? `);
+		if (scoresToUse.has(result)) {
 			// create this node if necessary
 			if (!pointer.scoreMap) {
 				pointer.scoreMap = {};
@@ -109,11 +99,13 @@ const go = async () => {
 			// descend a node
 			pointer = pointer.scoreMap[result];
 
-			possibleAnswers = winningScores.get(result);
+			possibleAnswers = scoresToUse.get(result);
 			pointer.possibleAnswers = possibleAnswers;
 
 			// console.log(JSON.stringify(tree));
-			await _writeFile(treeFile, JSON.stringify(tree))
+			if (fileWritingEnabled) {
+				await _writeFile(treeFile, JSON.stringify(tree))
+			}
 		}
 		else {
 			throw new Error(`${result} is not a valid score in the format 0/l/p x5`);
@@ -127,10 +119,10 @@ const go = async () => {
 const promptForInput = (text) => {
 	return new Promise((resolve, reject) => {
 		question(text).then(e => {
-			// lol this is the failure case
-			reject(e);
+			// lol wtf this is the failure case
+			resolve(undefined);
 		}).catch(result => {
-			// lol this is the success case
+			// lol wtf this is the success case
 			resolve(result);
 		});
 	});
@@ -177,6 +169,34 @@ const _writeFile = async (fileName, contents) => {
 	} catch (err) {
 		console.error(err);
 	}
+}
+
+const getFitness = (guess, words) => {
+	// scores will be a map of score result => array of possible answers 
+	// like 
+	// 	00000 => [apple, coats]
+	// 	0p0l0 => [fungi]
+	// 	ppp00 => [hears, heads, heath]
+	const scores = new Map();
+
+	words.forEach(word => {
+		const score = scoreGuess(guess, word);
+
+		// uncomment if you want to follow along
+		// process.stdout.write(`\r${possibleGuess} vs ${possibleAnswer}, score: ${score}`)
+
+		if (scores.has(score)) {
+			scores.set(score, [...scores.get(score), word]);
+		}
+		else {
+			scores.set(score, [word]);
+		}
+	})
+
+	return {
+		rms: calculateRMS(scores),
+		scores
+	};
 }
 
 go();
