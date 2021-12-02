@@ -1,0 +1,153 @@
+$VAR1 = {
+  'NEXTGUESS' => [
+    {
+      'GUESS' => 'puts',
+      'NEXTGUESS' => [
+        undef,
+        undef,
+        undef,
+        {
+          'GUESS' => 'comp',
+          'NEXTGUESS' => [
+            {
+              'NEXTGUESS' => [
+                {
+                  'GUESS' => 'ankh',
+                  'NEXTGUESS' => [
+                    undef,
+                    {
+                      'NEXTGUESS' => [
+                        undef,
+                        undef,
+                        undef,
+                        {
+                          'GUESS' => 'tusk',
+                          'NEXTGUESS' => [
+                            undef,
+                            undef,
+                            undef,
+                            undef,
+                            {}
+                          ]
+                        }
+                      ],
+                      'GUESS' => 'huts'
+                    }
+                  ]
+                }
+              ],
+              'GUESS' => 'bang'
+            }
+          ]
+        }
+      ]
+    },
+    {
+      'NEXTGUESS' => [
+        {
+          'GUESS' => 'lien',
+          'NEXTGUESS' => [
+            {
+              'GUESS' => 'dopy',
+              'NEXTGUESS' => [
+                undef,
+                undef,
+                {
+                  'NEXTGUESS' => [
+                    {
+                      'NEXTGUESS' => [
+                        undef,
+                        undef,
+                        {}
+                      ],
+                      'GUESS' => 'jock'
+                    }
+                  ],
+                  'GUESS' => 'gray'
+                }
+              ]
+            }
+          ]
+        },
+        {
+          'GUESS' => 'eros',
+          'NEXTGUESS' => [
+            {
+              'GUESS' => 'ping',
+              'NEXTGUESS' => [
+                {
+                  'GUESS' => 'icky',
+                  'NEXTGUESS' => [
+                    {
+                      'NEXTGUESS' => [
+                        undef,
+                        undef,
+                        {
+                          'GUESS' => 'amus',
+                          'NEXTGUESS' => [
+                            undef,
+                            undef,
+                            undef,
+                            {
+                              'NEXTGUESS' => [
+                                undef,
+                                undef,
+                                undef,
+                                undef,
+                                {}
+                              ],
+                              'GUESS' => 'alum'
+                            }
+                          ]
+                        }
+                      ],
+                      'GUESS' => 'flux'
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      'GUESS' => 'hast'
+    },
+    {
+      'NEXTGUESS' => [
+        undef,
+        undef,
+        undef,
+        {
+          'NEXTGUESS' => [
+            {
+              'GUESS' => 'upon',
+              'NEXTGUESS' => [
+                {
+                  'NEXTGUESS' => [
+                    {
+                      'NEXTGUESS' => [
+                        {
+                          'GUESS' => 'fake',
+                          'NEXTGUESS' => [
+                            undef,
+                            undef,
+                            {}
+                          ]
+                        }
+                      ],
+                      'GUESS' => 'agly'
+                    }
+                  ],
+                  'GUESS' => 'baht'
+                }
+              ]
+            }
+          ],
+          'GUESS' => 'wail'
+        }
+      ],
+      'GUESS' => 'dels'
+    }
+  ],
+  'GUESS' => 'dare'
+};

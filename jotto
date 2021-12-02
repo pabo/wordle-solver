@@ -1,0 +1,291 @@
+#!/usr/bin/perl -w
+use strict;
+
+# Author: brett.schellenberg@gmail.com
+# Purpose: Cheat at the iPhone game 'Qiktionary'
+# Strategy: Similar to a binary search, which guesses in order to split the results into equal parts based on the result of the guess.
+#           We look at which word, when guessed next, gives the most information (has the 
+
+
+# subsetwordlist is for use if the list of possible words the answer could be is a subset of all the possible words we can guess.
+
+
+# FIXME: load the word list, save a copy in memory, create another list of unique letters, sorted. can then compare by sorted 
+
+
+local $| = 1; # Or use IO::Handle; STDOUT->autoflush;
+
+use File::Slurp;
+use List::Util qw(sum);
+use Data::Dumper;
+$Data::Dumper::Indent = 1;
+
+use Time::HiRes qw(gettimeofday);
+my $time = [gettimeofday];
+my %times;
+use Getopt::Long;
+my $allwordlist;
+my $subsetwordlist;
+my $debug = 0;
+my $length = 4;
+my $savefile;
+my $stateless = 0;
+my $nosave = 0;
+my $tryhard = 0;
+my $threshhold = 500;
+my $unique = 0;
+
+my @allwords;
+my @subsetwords;
+my $words = [];
+my $subsetwords = [];
+my $guesses = {};
+my $tree = {};
+
+$| = 1; #disable output buffering;
+
+GetOptions(
+	"allwordlist=s" => \$allwordlist,
+	"subsetwordlist=s" => \$subsetwordlist,
+	"debug" => \$debug,
+	"uniq" => \$unique,
+	"length=i" => \$length,
+	"stateless" => \$stateless,
+	"nosave" => \$nosave,
+	"savefile=s" => \$savefile,
+	"tryhard" => \$tryhard,
+	"threshhold=i" => \$threshhold,
+);
+
+# $allwordlist ||= "/Users/pabo/Library/Dictionaries/enable1_by_length/just${length}_unique_letters";
+my $maybeUnique = $unique ? "_uniq" : "";
+$allwordlist ||= "./enable${length}${maybeUnique}.txt";
+$savefile ||= "./jotto_${length}${maybeUnique}.tree";
+
+open FILE, $allwordlist or die "Can't open file $allwordlist: $!";
+@allwords = <FILE>;
+chomp @allwords;
+close FILE;
+$words = [ @allwords ];
+
+if ($subsetwordlist) {
+	open FILE, $subsetwordlist or die "Can't open file $subsetwordlist: $!";
+	@subsetwords = <FILE>;
+	chomp @subsetwords;
+	close FILE;
+	$subsetwords = [ @subsetwords ];
+}
+else {
+	$subsetwords = $words;
+}
+
+
+# my $pointer = read_tree() unless $stateless;
+$tree = read_tree() unless $stateless;
+my $pointer = $tree;
+
+# This pointer points to a tree node.
+# Tree nodes are hashref with keys GUESS, DEFINITION, and NEXTGUESS.
+# GUESS is the correct guess from this tree node, and DEFINITION is the guess' definition.
+# NEXTGUESS is an arrayref. The pointer will move to the element of this arrayref that 
+# coincides with the score that reulted from this guess.
+
+
+while (scalar @$words) {
+	my $guess;
+	my $score;
+
+	# with memoization
+	if (! $pointer->{GUESS}) {
+		$pointer->{GUESS} = next_guess($words, $guesses);
+	}
+
+#	if (!exists $pointer->{DEFINITION}) {
+#		print "looking up $pointer->{GUESS}...\n";
+#		$pointer->{DEFINITION} = `define $pointer->{GUESS}`;
+#	}
+
+#	print "Suggested guess: $pointer->{GUESS} ($pointer->{DEFINITION}). Score (0-$length)? ";
+	print "Suggested guess: $pointer->{GUESS}... Score (0-$length)? ";
+	$score = get_score();
+	$guesses->{$pointer->{GUESS}} = $score;
+
+	if (! $pointer->{NEXTGUESS}->[$score]) {
+		$pointer->{NEXTGUESS}->[$score] = {} ; #create
+	}
+
+	$pointer = $pointer->{NEXTGUESS}->[$score];
+
+	write_tree($tree) unless $stateless || $nosave;
+
+	$subsetwords = trim_list($subsetwords, $guesses);
+	my $count = scalar @$subsetwords;
+	print "\n$count possible solutions remain";
+
+	print $count > 50 ? ".\n" : ": @$subsetwords\n";
+}
+
+
+
+
+
+
+# given the list of remaining words, returns a list of unique letters used in those words
+sub letters_left {
+	my ($words) = @_;
+
+	my %letters;
+	foreach my $word (@$words) {
+		foreach my $letter (split //, $word) {
+			$letters{$letter}++;
+		}
+	}
+
+	return join("", keys %letters);
+}
+
+
+sub read_tree {
+	my $saved_tree_contents = read_file($savefile);
+
+	my $VAR1;
+	eval $saved_tree_contents;
+
+	return $VAR1;
+}
+
+sub write_tree {
+	my ($tree) = @_;
+
+	open(FILE, ">$savefile") or die "Cannot open file for writing $savefile\n";
+	print FILE Dumper($tree);
+	close FILE;
+
+	return 1;
+}
+
+
+# given two words, return number of letters common to both. might break on repeated letters.
+sub score_word {
+	my ($word1, $word2) = @_;
+
+	my $count = 0;
+	foreach my $char1 (split //, $word1) {
+		foreach my $char2 (split //, $word2) {
+			$count++ if $char2 eq $char1;
+		}
+		#$count++ if $word2 =~ /$char1/;
+	}
+
+	return $count;
+}
+
+# given a word and a series of guesses (and scores), determine if word is valid possibility
+sub is_word_valid {
+	my ($word, $guesses) = @_;
+
+	my $good = 1;
+	foreach my $guess (keys %$guesses) {
+		if (score_word($word, $guess) != $guesses->{$guess}) {
+			$good = 0;
+			last;
+		}
+	}
+
+	return $good;
+}
+
+# given a guess and a result, trim down word list
+sub trim_list {
+	my ($words, $guesses) = @_;
+	my @valid_words;
+
+	foreach my $word (@$words) {
+		push @valid_words, $word if is_word_valid($word, $guesses);
+	}
+
+	return \@valid_words;
+}
+
+sub size_of_trimmed_list {
+	my $valid_words = trim_list(@_);
+
+	return scalar @$valid_words;
+}
+
+
+# given a list of numbers, calculate their root mean square deviation
+sub root_mean_square {
+	my $mean = sum(@_)/@_;
+	my $rms = 0;
+	foreach my $x (@_) {
+		$rms += ($x - $mean)**2;
+	}
+
+	return sqrt($rms);
+}
+
+# given a list of surviving word candidates and set of previous guesses (and their scores), determine the best next guess.
+sub next_guess {
+	my ($words, $guesses) = @_;
+
+	my $ranking = {};
+	my $winning_word = "";
+	my $winning_score = 10000;
+	my @word_list;
+
+	if (!$tryhard || scalar @$words > $threshhold) {
+		@word_list = @$words;
+	}
+	else {
+		@word_list = (@$words, @allwords);
+	}
+
+	print "\nlooping through " . scalar @word_list . " words\n";
+
+	my $count = 0;
+	foreach my $word (@word_list) {
+		$count++;
+
+		print "\nscoring $word... " if $debug;
+		my @sizes;
+		# foreach possible score this candidate word could score, minus the case where all letters match (anagram)
+		foreach my $candidate_score (0..$length-1) {
+
+			my $candidate_guesses = { };
+			$candidate_guesses->{$word} = $candidate_score;
+
+			my $size = size_of_trimmed_list($subsetwords, $candidate_guesses );
+			push @sizes, $size;
+			print "$size, " if $debug;
+		}
+
+		my $rms = root_mean_square(@sizes);
+		$ranking->{$word} = $rms;
+		print "] $rms (best: $winning_word:$winning_score)\n" if $debug;
+
+		# if this word beats the current known best word, then print it and its score. Otherwise, print "."
+		if ($rms < $winning_score) {
+			$winning_score = $rms;
+			$winning_word = $word;
+			print "\r$word: [@sizes] -> $rms\n";
+		}
+		else {
+			print "\r $count / " . scalar @word_list;
+		}
+	}
+
+	print "\n";
+	return $winning_word;
+}
+
+# prompt user for numeric score
+sub get_score {
+	my $input;
+	while ($input = <>) {
+		last if ($input >= 0 || $input <= $length);
+		print "\nPlease enter a score between 0 and $length inclusive: ";
+	}
+
+	return $input;
+}

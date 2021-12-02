@@ -1,0 +1,21 @@
+$VAR1 = {
+  'NEXTGUESS' => [
+    undef,
+    {
+      'NEXTGUESS' => [
+        undef,
+        undef,
+        {
+          'NEXTGUESS' => [
+            undef,
+            undef,
+            {}
+          ],
+          'GUESS' => 'spy'
+        }
+      ],
+      'GUESS' => 'sat'
+    }
+  ],
+  'GUESS' => 'are'
+};

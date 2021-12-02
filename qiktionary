@@ -1,0 +1,152 @@
+#!/usr/bin/perl -w
+use strict;
+
+# Author: brett.schellenberg@gmail.com
+# Purpose: Cheat at the iPhone game 'Qiktionary'
+# Strategy: Similar to a binary search, which guesses in order to split the results into equal parts based on the result of the guess.
+#           We look at which word, when guessed next, gives the most information (has the 
+
+local $| = 1; # Or use IO::Handle; STDOUT->autoflush;
+
+use List::Util qw(sum);
+use Time::HiRes qw(gettimeofday);
+my $time = [gettimeofday];
+my %times;
+use Getopt::Long;
+# my $wordlist = '/Users/pabo/Library/Dictionaries/enable1_by_length/just4';
+my $wordlist = './enable4_uniq.txt';
+my $debug = 0;
+
+my @allwords;
+my $words = [];
+my $guesses = {};
+
+GetOptions(
+	"wordlist=s" => \$wordlist,
+	"debug" => \$debug,
+);
+
+open FILE, $wordlist or die "Can't open file $wordlist: $!";
+@allwords = <FILE>;
+chomp @allwords;
+close FILE;
+$words = [ @allwords ];
+
+
+while (scalar @$words) {
+	my $guess = next_guess($words, $guesses);
+	print "Guess: $guess. Score (0-4)? ";
+	my $score = get_score();
+	$guesses->{$guess} = $score;
+
+	$words = trim_list($words, $guesses);
+	my $count = scalar @$words;
+	print "\nNumber of remaining possibilities: $count\n";
+}
+
+# given two words, score them against each other
+sub score_word {
+	my ($word1, $word2) = @_;
+
+	my $count = 0;
+	foreach my $char1 (split //, $word1) {
+		$count++ if $word2 =~ /$char1/;
+	}
+
+	return $count;
+}
+
+# given a word and a series of guesses (and scores), determine if word is valid
+sub is_word_valid {
+	my ($word, $guesses) = @_;
+
+	my $good = 1;
+	foreach my $guess (keys %$guesses) {
+		if (score_word($word, $guess) != $guesses->{$guess}) {
+			$good = 0;
+			last;
+		}
+	}
+
+	return $good;
+}
+
+# given a guess and a result, trim down word list
+sub trim_list {
+	my ($words, $guesses) = @_;
+	my @valid_words;
+
+	foreach my $word (@$words) {
+		push @valid_words, $word if is_word_valid($word, $guesses);
+	}
+
+	return \@valid_words;
+}
+
+sub size_of_trimmed_list {
+	my $valid_words = trim_list(@_);
+
+	return scalar @$valid_words;
+}
+
+
+# given a list of numbers, calculate their root mean square deviation
+sub root_mean_square {
+	my $mean = sum(@_)/(scalar @_);
+	my $rms = 0;
+	foreach my $x (@_) {
+		$rms += ($x - $mean)**2;
+	}
+
+	return sqrt($rms);
+}
+
+# given a list of surviving word candidates and a series of guesses, determine the best next guess.
+sub next_guess {
+	my ($words, $guesses) = @_;
+
+	my $ranking = {};
+	my $winning_word = "";
+	my $winning_score = 100000000;
+
+	my $count = 0;
+	foreach my $word (@$words) {
+		$count++;
+		my @sizes;
+		foreach my $candidate_score (0, 1, 2, 3, 4) {
+
+			#add the candidate guess into the hash of previous actual guesses
+			my $candidate_guesses = { %$guesses };
+			$candidate_guesses->{$word} = $candidate_score;
+
+			my $size = size_of_trimmed_list($words, $candidate_guesses );
+			push @sizes, $size;
+		}
+
+		my $rms = root_mean_square(@sizes);
+		$ranking->{$word} = $rms;
+
+		if ($rms < $winning_score) {
+			$winning_score = $rms;
+			$winning_word = $word;
+
+			print "\rwinning word: $word (rms:$rms)\n";
+		}
+		else {
+			print "\r $count / " . scalar @$words;
+		}
+	}
+
+	return $winning_word;
+}
+
+# prompt user for numeric score
+sub get_score {
+	my $input;
+	while ($input = <>) {
+		last if ($input >= 0 || $input <= 4);
+		print "\nPlease enter a score between 0 and 4 inclusive: ";
+	}
+
+	return $input;
+}

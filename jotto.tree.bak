@@ -1,0 +1,40 @@
+$VAR1 = [
+	{}, #0
+	{}, #1
+	{}, #2
+	{}, #3
+	{   #4
+		GUESS => "dear",
+		NEXTGUESS => [],
+	},
+	{   #5
+		GUESS => "beard", 
+		NEXTGUESS => [
+			{
+				GUESS => "coups",
+				NEXTGUESS => [],
+			},
+			{
+				GUESS => "bitch",
+				NEXTGUESS => [],
+			},
+			{
+				GUESS => "bench",
+				NEXTGUESS => [],
+			},
+			{
+				GUESS => "beaks",
+				NEXTGUESS => [],
+			},
+			{
+				GUESS => "bears",
+				NEXTGUESS => [],
+			},
+			{
+				GUESS => "beard",
+				NEXTGUESS => [],
+			},
+		],
+	},
+];
+
