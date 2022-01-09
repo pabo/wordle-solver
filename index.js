@@ -23,12 +23,12 @@ const question = util.promisify(rl.question).bind(rl);
 // this is what tree file format looks like
 // const tree = {
 // 	bestGuess: 'lares',
-// 	rms: 0,
+// 	fitness: 0,
 // 	scoreMap: {
 // 		'00pl0': {
 //			possibleAnswers: ['berme', 'berry', 'berth', 'borne'] //.....
 // 			bestGuess: '?',
-// 			rms: '?',
+// 			fitness: '?',
 // 		}
 // 	}
 // };
@@ -60,22 +60,21 @@ const go = async () => {
 		let winningScores;
 
 		// go through every possible guess, pairing with every possible remaining word.
-		// for each above combo, score it, then find the guess with the best spread (that will
-		// yield the most possible information on average) measured by RMS.
+		// for each above combo, score it, and find the next guess with the lowest (winning) fitness
 		words.some(possibleGuess => {
-			const {rms, scores} = getFitness(possibleGuess, possibleAnswers);
+			const {fitness, scores} = getFitness(possibleGuess, possibleAnswers);
 
-			if (!pointer.rms) {
-				pointer.rms = rms;
+			if (!pointer.fitness) {
+				pointer.fitness = fitness;
 				winningScores = scores;
-				!automaticMode && console.log(`winning guess is ${possibleGuess} [${rms}]`);
+				!automaticMode && console.log(`winning guess is ${possibleGuess} [${fitness}]`);
 			}
-			else if (rms < pointer.rms || pointer.bestGuess === possibleGuess) {
+			else if (fitness < pointer.fitness || pointer.bestGuess === possibleGuess) {
 				winningScores = scores;
 
-				pointer.rms = rms;
+				pointer.fitness = fitness;
 				pointer.bestGuess = possibleGuess;
-				!automaticMode && console.log(`winning guess is ${possibleGuess} [${rms}]`);
+				!automaticMode && console.log(`winning guess is ${possibleGuess} [${fitness}]`);
 			}
 
 			// uncomment if you want to stop the word list loop early
@@ -94,8 +93,8 @@ const go = async () => {
 		if (actualGuess !== pointer.bestGuess) {
 			fileWritingEnabled = false;
 
-			const {rms, scores} = getFitness(actualGuess, possibleAnswers);
-			console.log(`${actualGuess} has a fitness of [${rms}]`);
+			const {fitness, scores} = getFitness(actualGuess, possibleAnswers);
+			console.log(`${actualGuess} has a fitness of [${fitness}]`);
 			scoresToUse = scores;
 		}
 
@@ -146,7 +145,10 @@ const promptForInput = (text) => {
 	});
 }
 
-const calculateRMS = function (scoresMap) {
+// The fitness is defined as the RMS of the scores. The idea is that, like a binary search splits the search space into 
+// 2 equal sub-spaces, here we want to make the guess whose possible results are the best on average. We can't control
+// what score we get back from a guess, but we can attempt to generate the best outcome in the average or worst case.
+const calculateFitness = function (scoresMap) {
 	const numPossibilities = 243;
 
 	const values = Array.from(scoresMap.values());
@@ -189,6 +191,8 @@ const _writeFile = async (fileName, contents) => {
 	}
 }
 
+// given a guess and a word list, generates a fitness value for this guess.
+// lower fitnesses should indicate better guesses.
 const getFitness = (guess, words) => {
 	// scores will be a map of score result => array of possible answers 
 	// like 
@@ -212,7 +216,7 @@ const getFitness = (guess, words) => {
 	})
 
 	return {
-		rms: calculateRMS(scores),
+		fitness: calculateFitness(scores),
 		scores
 	};
 }
