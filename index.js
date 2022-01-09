@@ -1,10 +1,17 @@
 const {readFile} = require('fs/promises');
 const { writeFile } = require('fs/promises');
+const yargs = require('yargs/yargs')
+const { hideBin } = require('yargs/helpers')
 const tree = require('./wordle.tree.json');
 const readline = require('readline')
 const util = require('util');
 const wordlistFile = 'enable5.txt';
 const treeFile = 'wordle.tree.json';
+
+const argv = yargs(hideBin(process.argv)).argv;
+
+const automaticMode = argv.answer || false
+const knownAnswer = argv.answer;
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -28,6 +35,7 @@ const question = util.promisify(rl.question).bind(rl);
 
 let pointer = tree;
 let fileWritingEnabled = true;
+let guessCount = 0;
 
 const go = async () => {
 	const allWords = (await readFile(wordlistFile, {encoding: 'utf8'})).split("\n");
@@ -35,9 +43,11 @@ const go = async () => {
 	let possibleAnswers = pointer?.possibleAnswers || [...words];
 
 	while (possibleAnswers.length > 1) {
-		console.log(`${possibleAnswers.length} possible answers remain`);
+		guessCount++; 
+
+		!automaticMode && console.log(`${possibleAnswers.length} possible answers remain`);
 		if (possibleAnswers.length < 200) {
-			console.log(`${possibleAnswers}`);
+			!automaticMode && console.log(`${possibleAnswers}`);
 		}
 	
 		if (pointer.bestGuess) {
@@ -58,23 +68,27 @@ const go = async () => {
 			if (!pointer.rms) {
 				pointer.rms = rms;
 				winningScores = scores;
-				console.log(`winning guess is ${possibleGuess} [${rms}]`);
+				!automaticMode && console.log(`winning guess is ${possibleGuess} [${rms}]`);
 			}
 			else if (rms < pointer.rms || pointer.bestGuess === possibleGuess) {
 				winningScores = scores;
 
 				pointer.rms = rms;
 				pointer.bestGuess = possibleGuess;
-				console.log(`winning guess is ${possibleGuess} [${rms}]`);
+				!automaticMode && console.log(`winning guess is ${possibleGuess} [${rms}]`);
 			}
 
 			// uncomment if you want to stop the word list loop early
 			// return possibleGuess === 'armed';
 		});
 
-		console.log("\r");
+		!automaticMode && console.log("\r");
 
-		const actualGuess = await promptForInput(`What's your guess? ([enter] for ${pointer.bestGuess}) `) || pointer.bestGuess;
+		const actualGuess = automaticMode
+			? pointer.bestGuess
+			: await promptForInput(`What's your guess? ([enter] for ${pointer.bestGuess}) `) || pointer.bestGuess
+
+		console.log(`guess#${guessCount}: ${actualGuess}`);
 
 		let scoresToUse = winningScores;
 		if (actualGuess !== pointer.bestGuess) {
@@ -85,7 +99,11 @@ const go = async () => {
 			scoresToUse = scores;
 		}
 
-		const result = await promptForInput(`What was the result for ${actualGuess}? `);
+		const result = automaticMode
+			? scoreGuess(actualGuess, knownAnswer)
+			: await promptForInput(`What was the result for ${actualGuess}? `);
+
+			// console.log("result is ", result)
 		if (scoresToUse.has(result)) {
 			// create this node if necessary
 			if (!pointer.scoreMap) {
@@ -112,7 +130,7 @@ const go = async () => {
 		}
 	}
 
-	console.log("answer is", possibleAnswers[0]);
+	console.log(`guess#${guessCount+1}: ${possibleAnswers[0]} (answer)`);
 	process.exit(0)
 }
 
