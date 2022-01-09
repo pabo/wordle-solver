@@ -45,5 +45,7 @@ Take the results file and output a summary of how well the solver performs
 $ cat perf.txt | grep answer | cut -d" " -f1 | sed -e "s/guess#\(.*\):/words took \1 guesses /" | sort | uniq -c
 ```
 
-## notes
-tested on node `v14.10.0`. I think `v16` breaks it but haven't looked into why.
+## Notes
+This was tested on node `v14.10.0`. I think `v16` breaks it but haven't looked into why.
+
+The author of wordle stated that he started with a wordlist of every 5 letter word, and then pared it down to "common words". Despite this, I still use the entire set of known 5-letter words from the commonly-used ENABLE wordlist. I [include those word lists here](./wordlists/), as well as several variations.

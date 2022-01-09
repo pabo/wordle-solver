@@ -2,11 +2,11 @@ const {readFile} = require('fs/promises');
 const { writeFile } = require('fs/promises');
 const yargs = require('yargs/yargs')
 const { hideBin } = require('yargs/helpers')
-const tree = require('./wordle.tree.json');
+const tree = require('./trees/wordle.tree.json');
 const readline = require('readline')
 const util = require('util');
-const wordlistFile = 'enable5.txt';
-const treeFile = 'wordle.tree.json';
+const wordlistFile = 'wordlists/enable5.txt';
+const treeFile = 'trees/wordle.tree.json';
 
 const argv = yargs(hideBin(process.argv)).argv;
 
