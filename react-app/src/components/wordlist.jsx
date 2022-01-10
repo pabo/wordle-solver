@@ -10,7 +10,7 @@ const CandidateWord = ({ word, wordSelectedHandler }) => {
   );
 };
 
-export const WordList = ({ list, wordSelectedHandler }) => {
+export const WordList = ({ list=[], wordSelectedHandler }) => {
   return (
     <div className="wordlist">
       <div className="remaining-count">

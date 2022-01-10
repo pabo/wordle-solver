@@ -45,11 +45,11 @@
   text-transform: uppercase;
 }
 
-.letter-tile.present {
+.letter-tile.l {
   background-color: #c9b458;
 }
 
-.letter-tile.correct {
+.letter-tile.p {
   background-color: #6aaa64;
 }
 
