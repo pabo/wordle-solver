@@ -1,17 +1,17 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import {App} from './components/app';
-import {Store} from "./store";
+import React from "react";
+import ReactDOM from "react-dom";
+import "./index.css";
+import { App } from "./components/app";
+import { Store } from "./store";
 
 const store = new Store();
-console.log("store is ", store)
+console.log("store is ", store);
 
 ReactDOM.render(
   <React.StrictMode>
-    <App store={store}/>
+    <App store={store} />
   </React.StrictMode>,
-  document.getElementById('root')
+  document.getElementById("root")
 );
 
 // If you want to start measuring performance in your app, pass a function

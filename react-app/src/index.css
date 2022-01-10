@@ -22,11 +22,11 @@
 
 .candidate-words {
   overflow-y: scroll;
-  height: 90%
+  height: 90%;
 }
 
 .guess-word {
-  font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
+  font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
   font-size: 32px;
   font-weight: 700;
   user-select: none;

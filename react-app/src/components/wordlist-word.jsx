@@ -1,6 +1,5 @@
-import { LetterTile } from './letter-tile';
+import { LetterTile } from "./letter-tile";
 
-export const WordListWord = ({word}) => {
-	return <div className="word">
-	</div>
-}
+export const WordListWord = ({ word }) => {
+  return <div className="word"></div>;
+};
