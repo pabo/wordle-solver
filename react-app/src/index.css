@@ -11,16 +11,18 @@
   /* grid-template-columns: 62px 62px 62px 62px 62px; */
 }
 
-.wordlist {
+.guess-list-word.candidate {
+  background-color: green;
+}
+
+.guess-list,
+.candidate-list {
   border: 1px solid black;
   width: 350px;
   height: 420px;
 }
 
-.remaining-count {
-}
-
-.candidate-words {
+.wordlist {
   overflow-y: scroll;
   height: 90%;
 }

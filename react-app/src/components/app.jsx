@@ -1,9 +1,15 @@
 import { Board } from "./board";
-import { WordList } from "./wordlist";
+import { GuessList, CandidateList } from "./wordlists";
 import { observer } from "mobx-react-lite";
 
 export const App = observer(({ store }) => {
-  const { guessMap, candidateWordlist, addGuess, toggleLetterScore } = store;
+  const {
+    candidateWords,
+    madeGuesses,
+    sortedGuessesAndScores,
+    addGuess,
+    toggleLetterScore,
+  } = store;
 
   const wordSelectedHandler = (word) => {
     addGuess(word);
@@ -11,8 +17,13 @@ export const App = observer(({ store }) => {
 
   return (
     <div className="container">
-      <Board guesses={guessMap} toggleLetterScore={toggleLetterScore}/>
-      <WordList list={candidateWordlist} wordSelectedHandler={wordSelectedHandler} />
+      <Board guesses={madeGuesses} toggleLetterScore={toggleLetterScore} />
+      <GuessList
+        words={sortedGuessesAndScores}
+	candidateWords={candidateWords}
+        wordSelectedHandler={wordSelectedHandler}
+      />
+      <CandidateList words={candidateWords} />
     </div>
   );
 });
