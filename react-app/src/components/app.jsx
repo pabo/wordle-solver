@@ -9,6 +9,7 @@ export const App = observer(({ store }) => {
     sortedGuessesAndScores,
     addGuess,
     toggleLetterScore,
+    knownPositions
   } = store;
 
   const wordSelectedHandler = (word) => {
@@ -17,11 +18,12 @@ export const App = observer(({ store }) => {
 
   return (
     <div className="container">
-      <Board guesses={madeGuesses} toggleLetterScore={toggleLetterScore} />
+      <Board guesses={madeGuesses} knownPositions={knownPositions} toggleLetterScore={toggleLetterScore} />
       <GuessList
         words={sortedGuessesAndScores}
-	candidateWords={candidateWords}
+        candidateWords={candidateWords}
         wordSelectedHandler={wordSelectedHandler}
+	knownPositions={knownPositions}
       />
       <CandidateList words={candidateWords} />
     </div>

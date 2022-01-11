@@ -2,6 +2,7 @@ import { LetterTile } from "./letter-tile";
 import { observer } from "mobx-react-lite";
 
 export const GuessWord = observer(({ word, score, toggleLetterScore }) => {
+
   return (
     <div className="guess-word">
       {word ? (
@@ -12,7 +13,9 @@ export const GuessWord = observer(({ word, score, toggleLetterScore }) => {
               key={index}
               letter={letter}
               evaluation={evaluation}
-              toggleLetter={() => toggleLetterScore(index)}
+              toggleLetter={() => {
+                toggleLetterScore(index);
+              }}
             />
           );
         })

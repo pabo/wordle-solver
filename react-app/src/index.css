@@ -2,6 +2,10 @@
   display: flex;
 }
 
+div {
+  box-sizing: border-box;
+}
+
 .board {
   width: 350px;
   height: 420px;
@@ -11,8 +15,10 @@
   /* grid-template-columns: 62px 62px 62px 62px 62px; */
 }
 
-.guess-list-word.candidate {
-  background-color: green;
+.header {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin-bottom: 5px;
 }
 
 .guess-list,
@@ -20,11 +26,27 @@
   border: 1px solid black;
   width: 350px;
   height: 420px;
+  padding: 5px;
+  text-align: center;
 }
 
 .wordlist {
   overflow-y: scroll;
   height: 90%;
+}
+
+.guess-list-word,
+.candidate-word {
+  font-size: 1.3em;
+  cursor: pointer;
+}
+
+.guess-list-word {
+  color: #787c7e;
+}
+
+.guess-list-word.candidate {
+  color: black;
 }
 
 .guess-word {
@@ -58,4 +80,10 @@
 .letter-tile.pending {
   background-color: white;
   border: 1px solid black;
+}
+
+.letter-tile.initial {
+  background-color: white;
+  border: 1px solid black;
+  color: black;
 }

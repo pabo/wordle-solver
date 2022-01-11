@@ -63,14 +63,14 @@ const scoreGuess = (guess, answer) => {
   }
 
   for (let i = 0; i < guessList.length; i++) {
-      for (let j = i + 1; j < guessList.length; j++) {
-        if (score[i] === '0' && guessList[i] === answerList[j]) {
-          score[i] = "l";
-          guessList[i] = ".";
-          answerList[j] = ".";
-          break;
-        }
+    for (let j = 0; j < guessList.length; j++) {
+      if (score[i] === "0" && guessList[i] === answerList[j]) {
+        score[i] = "l";
+        guessList[i] = ".";
+        answerList[j] = ".";
+        break;
       }
+    }
   }
   return score.join("");
 };
