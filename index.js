@@ -166,19 +166,35 @@ const calculateFitness = function (scoresMap) {
 //	l (letter match)
 // 	p (letter and position match)
 const scoreGuess = (guess, answer) => {
-	const score = [0,0,0,0,0];
-
-	guess.split("").forEach((guessChar, guessIndex) => {
-		if (guessChar === answer[guessIndex]) {
-			score[guessIndex] = "p";
-		}
-		else if (answer.includes(guessChar)) { // TODO: could double count double letters?
-			score[guessIndex] = "l";
-		}
-	})	
-
+	const score = ["0", "0", "0", "0", "0"];
+      
+	if (guess.length !== answer.length) {
+	//   throw new Error(`${guess} and ${answer} are different lengths`);
+	}
+      
+	const guessList = guess.split("");
+	const answerList = answer.split("");
+      
+	for (let i = 0; i < guessList.length; i++) {
+	  if (guessList[i] === answerList[i]) {
+	    score[i] = "p";
+	    guessList[i] = ".";
+	    answerList[i] = ".";
+	  }
+	}
+      
+	for (let i = 0; i < guessList.length; i++) {
+	    for (let j = 0; j < guessList.length; j++) {
+	      if (score[i] === '0' && guessList[i] === answerList[j]) {
+		score[i] = "l";
+		guessList[i] = ".";
+		answerList[j] = ".";
+		break;
+	      }
+	    }
+	}
 	return score.join("");
-}
+};
 
 const _writeFile = async (fileName, contents) => {
 	try {
@@ -205,7 +221,7 @@ const getFitness = (guess, words) => {
 		const score = scoreGuess(guess, word);
 
 		// uncomment if you want to follow along
-		// process.stdout.write(`\r${possibleGuess} vs ${possibleAnswer}, score: ${score}`)
+		// process.stdout.write(`${guess} vs ${word}, score: ${score}`)
 
 		if (scores.has(score)) {
 			scores.set(score, [...scores.get(score), word]);
