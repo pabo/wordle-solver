@@ -33,7 +33,7 @@ const calculateFitness = function (scoresMap) {
   const values = Array.from(scoresMap.values());
   const counts = values.map((x) => x.length);
   const squares = counts.map((x) => x * x);
-  const sum = squares.reduce((acum, val) => acum + val);
+  const sum = squares.reduce((acum, val) => acum + val, 0);
 
   const mean = sum / numPossibilities;
   return Math.sqrt(mean);

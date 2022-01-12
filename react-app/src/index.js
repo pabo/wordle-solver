@@ -2,10 +2,9 @@ import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
 import { App } from "./components/app";
-import { Store } from "./store";
+import { Store } from "./store-v2";
 
 const store = new Store();
-console.log("store is ", store);
 
 ReactDOM.render(
   <React.StrictMode>

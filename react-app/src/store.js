@@ -1,15 +1,18 @@
-import { list } from "./enable5.js";
+// import { list } from "./enable5.js";
+import { list as answerList } from "./wordle-answers";
+import { list as guessList } from "./wordle-guesses";
+
 import { observable, makeAutoObservable } from "mobx";
 import { getFitness } from "./word-utils";
 export class Store {
   constructor() {
     // as we gain information, this map will be culled down to eventually one possible word
-    this.candidateWordsCulled = observable.set(new Set(list));
+    this.candidateWordsCulled = observable.set(new Set(answerList));
 
     // All words all allowed as guesses except those that have already been guessed.
     // otherwise the only thing that changes is the score associated with each guess word
     this.nextGuessMap = observable.map(
-      new Map(list.map((word) => [word, { fitness: 0 }]))
+      new Map(guessList.map((word) => [word, { fitness: 0 }]))
     );
 
     // The guesses that have been made, {guess: "abide", evaluation: []}
@@ -29,16 +32,16 @@ export class Store {
   };
 
   updateKnownPositions = () => {
-	  if (this.lastMadeGuess) {
-
-	this.lastMadeGuess.evaluation.forEach((letter, index) => {
-		if (letter === 'p') {
-			this.knownPositions[index] = this.lastMadeGuess.guess.split("")[index];
-		}
-	})
-	  console.log("updating known pos", this.knownPositions)
-	  }
-  }
+    if (this.lastMadeGuess) {
+      this.lastMadeGuess.evaluation.forEach((letter, index) => {
+        if (letter === "p") {
+          this.knownPositions[index] =
+            this.lastMadeGuess.guess.split("")[index];
+        }
+      });
+      console.log("updating known pos", this.knownPositions);
+    }
+  };
 
   // we'd like to only ever toggle the most recent guess
   toggleLetterScore = (position) => {
@@ -59,13 +62,15 @@ export class Store {
       ...this.lastMadeGuess,
       evaluation: newEvaluation,
     };
+
+    this.calculateGuessScores();
   };
 
   // TODO: don't always want to cull.
   // should only cull when a score has been locked in (which is when the next guess is recorded)
   // meanwhile the possible answers AND the guess scores should be calculated for display
   hardCullCandidateWords = () => {
-	  console.log("culling candidateWords")
+    console.log("culling candidateWords");
     if (!this.lastMadeGuess) {
       return this.candidateWordsCulled;
     }
@@ -81,7 +86,7 @@ export class Store {
   };
 
   get candidateWords() {
-	  console.log("getting candidateWords")
+    console.log("getting candidateWords");
     if (!this.lastMadeGuess) {
       return this.candidateWordsCulled;
     }
@@ -106,9 +111,9 @@ export class Store {
   }
 
   calculateGuessScores = () => {
-	  console.log("calcing guess scores");
     [...this.nextGuessMap].forEach(([word]) => {
-      const results = getFitness(word, this.candidateWordsList);
+      const results = getFitness(word, this.candidateWordsCulled);
+      console.log(`calcing guess scores for ${word}`, results.fitness);
       this.nextGuessMap.set(word, results);
     });
   };

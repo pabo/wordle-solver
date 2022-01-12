@@ -26,31 +26,25 @@ const CandidateListWord = observer(({ word }) => {
   );
 });
 
-
-export const GuessList = observer(
-  ({ words = [], wordSelectedHandler, candidateWords }) => {
-    return (
-      <div className="guess-list">
-        <div className="header">Legal guesses, sorted by fitness</div>
-        <div className="wordlist">
-          {words.map(([word, score]) => {
-            const isCandidate = candidateWords.has(word);
-
-            return (
-              <GuessListWord
-                isCandidate={isCandidate}
-                key={word}
-                word={word}
-                score={score}
-                wordSelectedHandler={wordSelectedHandler}
-              />
-            );
-          })}
-        </div>
+export const GuessList = observer(({ words = [], wordSelectedHandler }) => {
+  return (
+    <div className="guess-list">
+      <div className="header">Legal guesses, sorted by fitness</div>
+      <div className="wordlist">
+        {words.map(([word, score]) => {
+          return (
+            <GuessListWord
+              key={word}
+              word={word}
+              score={score}
+              wordSelectedHandler={wordSelectedHandler}
+            />
+          );
+        })}
       </div>
-    );
-  }
-);
+    </div>
+  );
+});
 
 export const CandidateList = observer(({ words = [] }) => {
   return (

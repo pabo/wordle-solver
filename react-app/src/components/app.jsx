@@ -4,12 +4,11 @@ import { observer } from "mobx-react-lite";
 
 export const App = observer(({ store }) => {
   const {
-    candidateWords,
-    madeGuesses,
+    currentSurvivors,
+    guesses,
     sortedGuessesAndScores,
     addGuess,
     toggleLetterScore,
-    knownPositions
   } = store;
 
   const wordSelectedHandler = (word) => {
@@ -18,14 +17,12 @@ export const App = observer(({ store }) => {
 
   return (
     <div className="container">
-      <Board guesses={madeGuesses} knownPositions={knownPositions} toggleLetterScore={toggleLetterScore} />
+      <Board guesses={guesses} toggleLetterScore={toggleLetterScore} />
       <GuessList
         words={sortedGuessesAndScores}
-        candidateWords={candidateWords}
         wordSelectedHandler={wordSelectedHandler}
-	knownPositions={knownPositions}
       />
-      <CandidateList words={candidateWords} />
+      <CandidateList words={currentSurvivors} />
     </div>
   );
 });

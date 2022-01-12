@@ -41,14 +41,6 @@ div {
   cursor: pointer;
 }
 
-.guess-list-word {
-  color: #787c7e;
-}
-
-.guess-list-word.candidate {
-  color: black;
-}
-
 .guess-word {
   font-family: "Clear Sans", "Helvetica Neue", Arial, sans-serif;
   font-size: 32px;
