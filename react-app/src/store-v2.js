@@ -13,12 +13,12 @@ export class Store {
     this.guessFitnessMap = observable.map();
     this.guessSurvivorMapMap = observable.map();
 
-    [...answerList, ...guessList].forEach(word => {
+    [...answerList, ...guessList].forEach((word) => {
       this.possibleGuesses.add(word);
       this.guessFitnessMap.set(word, 0);
       // this.guessSurvivorMapMap.set([word, new Map()]);
-    })
-    
+    });
+
     this.possibleAnswers = observable.set(new Set(answerList));
 
     this.updateFitnessAndSurvivorMap();
@@ -102,11 +102,11 @@ export class Store {
 
   cullPossibleAnswers = () => {
     const newPossibleAnswers = this.currentSurvivors;
-    [...this.possibleAnswers.keys()].forEach(key => {
+    [...this.possibleAnswers.keys()].forEach((key) => {
       if (!newPossibleAnswers.has(key)) {
         this.possibleAnswers.delete(key);
       }
-    })
+    });
   };
 
   // survivors, given all current info like soft evaluation
@@ -121,7 +121,9 @@ export class Store {
       return this.possibleAnswers;
     }
 
-    const survivors = this.guessSurvivorMapMap.get(this.lastGuessedWord).get(this.lastGuessedEvaluation.join(""));
+    const survivors = this.guessSurvivorMapMap
+      .get(this.lastGuessedWord)
+      .get(this.lastGuessedEvaluation.join(""));
 
     return new Set(survivors);
   }
@@ -133,12 +135,12 @@ export class Store {
     console.log(`calculating scores against ${total} possible answers...`);
 
     [...this.possibleGuesses].forEach((word, index) => {
-      this.progress = 100*(1+index)/total;
+      this.progress = (100 * (1 + index)) / total;
       // get the fitness and survivormap of each word, but from different lists
-      const {fitness} = getFitness(word, [...this.currentSurvivors]);
+      const { fitness } = getFitness(word, [...this.currentSurvivors]);
 
       // TODO: actually, how often do we need to update scoresurvivormap?
-      const {scoresSurvivorsMap} = getFitness(word, possibleAnswers);
+      const { scoresSurvivorsMap } = getFitness(word, possibleAnswers);
 
       this.guessFitnessMap.set(word, fitness);
       this.guessSurvivorMapMap.set(word, scoresSurvivorsMap);
@@ -149,7 +151,7 @@ export class Store {
 
   // the surviving possible guesses, scored and sorted
   get sortedGuessesAndScores() {
-    console.log("sorting guesses and scores")
+    console.log("sorting guesses and scores");
     return [...this.guessFitnessMap.entries()]
       .sort((a, b) => a[1] - b[1])
       .filter(([guess]) => !this.guesses.some(({ word }) => guess === word));
