@@ -1,5 +1,4 @@
 ## TODOs
-- bug: roate but then second guess is always raise?
 - must go faster
 - right click to go backwards in rotation
 - delay after clicking before soft culling - or at least responsiveness to clicking

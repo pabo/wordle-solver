@@ -5,7 +5,7 @@ const { hideBin } = require('yargs/helpers')
 const tree = require('./trees/wordle.tree.json');
 const readline = require('readline')
 const util = require('util');
-const wordlistFile = 'wordlists/enable5.txt';
+const wordlistFile = 'wordlists/wordle.txt';
 const treeFile = 'trees/wordle.tree.json';
 
 const argv = yargs(hideBin(process.argv)).argv;

@@ -12,7 +12,7 @@ const GuessListWord = observer(
         data-word={word}
         onClick={handleClick}
       >
-        {word} ({score.fitness.toFixed(3)})
+        {word} ({score.toFixed(3)})
       </div>
     );
   }

@@ -6,32 +6,39 @@ import { getFitness } from "./word-utils";
 
 export class Store {
   constructor() {
+    this.progress = 100;
     this.guesses = [];
-    this.possibleGuesses = observable.map(
-      new Map(
-        [...answerList, ...guessList].map((word) => [word, { fitness: 0 }])
-      )
-    );
-    this.scoresSurvivorsMap = observable.map();
+
+    this.possibleGuesses = observable.set();
+    this.guessFitnessMap = observable.map();
+    this.guessSurvivorMapMap = observable.map();
+
+    [...answerList, ...guessList].forEach(word => {
+      this.possibleGuesses.add(word);
+      this.guessFitnessMap.set(word, 0);
+      // this.guessSurvivorMapMap.set([word, new Map()]);
+    })
+    
     this.possibleAnswers = observable.set(new Set(answerList));
 
-    this.calculateGuessesAndScores();
+    this.updateFitnessAndSurvivorMap();
 
     makeAutoObservable(this);
   }
 
-  // by adding a guess we are essentially locking in the previous guess as well
-  // as starting the next guess
+  // by adding a guess we are essentially locking in the previous guess
+  // as well as starting the next guess
   addGuess = (guess) => {
     // lock in previous guess and evaluation
     this.cullPossibleAnswers();
-    this.calculateGuessesAndScores(); // TODO: is this done anyways by some side effect?
 
     // add guess as a still-fluid guess
     this.guesses.push({
       word: guess,
       evaluation: this.evaluateGuess(guess),
     });
+
+    this.updateFitnessAndSurvivorMap();
   };
 
   // we'd like to only ever toggle the most recent guess
@@ -54,7 +61,7 @@ export class Store {
       evaluation: newEvaluation,
     };
 
-    // either soft-cull both lists or rely on computeds....
+    this.updateFitnessAndSurvivorMap();
   };
 
   // This is simply for convenience. We can know some of them, and we can guess at the rest.
@@ -63,6 +70,7 @@ export class Store {
     // evaluation.
     // TODO: 2. GUESS: if this letter has been guessed in another position and resulted in a 'p',
     // then we can se it to 'l'
+    // 3. default to 0
     const guessLetters = guess.split("");
     let evaluation = ["0", "0", "0", "0", "0"];
 
@@ -80,56 +88,70 @@ export class Store {
     return evaluation;
   };
 
-  cullPossibleAnswers = () => {
-    console.log("hard cull answers");
-    this.possibleAnswers = this.filteredPossibleAnswers;
-  };
-
-  get currentSurvivors() {
-    console.log("soft cull answers");
-    return this.filteredPossibleAnswers;
-  }
-
-  calculateGuessesAndScores = () => {
-    console.log("calculating scores");
-    [...this.possibleGuesses].forEach(([word]) => {
-      console.log("scoring", word);
-      // get the fitness and survivormap of each word
-      const results = getFitness(word, [...this.possibleAnswers]);
-      this.possibleGuesses.set(word, results);
-    });
-  };
-
   get lastGuess() {
     return this.guesses[this.guesses.length - 1];
   }
 
   get lastGuessedWord() {
-    return this.lastGuess.word;
+    return this.lastGuess?.word;
   }
 
   get lastGuessedEvaluation() {
-    return this.lastGuess.evaluation;
+    return this.lastGuess?.evaluation;
   }
 
+  cullPossibleAnswers = () => {
+    const newPossibleAnswers = this.currentSurvivors;
+    [...this.possibleAnswers.keys()].forEach(key => {
+      if (!newPossibleAnswers.has(key)) {
+        this.possibleAnswers.delete(key);
+      }
+    })
+  };
+
+  // survivors, given all current info like soft evaluation
+  get currentSurvivors() {
+    return this.filteredPossibleAnswers;
+  }
+
+  // TODO: for soft culling, we filter based on the last results from calculateGuessesAndScores,
+  //  which now happens with every toggle. is this an issue?
   get filteredPossibleAnswers() {
     if (!this.lastGuess) {
       return this.possibleAnswers;
     }
 
-    const { scoresSurvivorsMap } = this.possibleGuesses.get(
-      this.lastGuessedWord
-    );
-    const survivors = scoresSurvivorsMap.get(
-      this.lastGuessedEvaluation.join("")
-    );
-    return observable.set(new Set(survivors));
+    const survivors = this.guessSurvivorMapMap.get(this.lastGuessedWord).get(this.lastGuessedEvaluation.join(""));
+
+    return new Set(survivors);
   }
+
+  updateFitnessAndSurvivorMap = () => {
+    const possibleAnswers = [...this.possibleAnswers];
+    const total = this.possibleGuesses.size;
+
+    console.log(`calculating scores against ${total} possible answers...`);
+
+    [...this.possibleGuesses].forEach((word, index) => {
+      this.progress = 100*(1+index)/total;
+      // get the fitness and survivormap of each word, but from different lists
+      const {fitness} = getFitness(word, [...this.currentSurvivors]);
+
+      // TODO: actually, how often do we need to update scoresurvivormap?
+      const {scoresSurvivorsMap} = getFitness(word, possibleAnswers);
+
+      this.guessFitnessMap.set(word, fitness);
+      this.guessSurvivorMapMap.set(word, scoresSurvivorsMap);
+    });
+
+    console.log(`...done`);
+  };
 
   // the surviving possible guesses, scored and sorted
   get sortedGuessesAndScores() {
-    return [...this.possibleGuesses.entries()]
-      .sort((a, b) => a[1].fitness - b[1].fitness)
+    console.log("sorting guesses and scores")
+    return [...this.guessFitnessMap.entries()]
+      .sort((a, b) => a[1] - b[1])
       .filter(([guess]) => !this.guesses.some(({ word }) => guess === word));
   }
 }
