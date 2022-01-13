@@ -6,22 +6,17 @@ import { getFitness } from "./word-utils";
 
 export class Store {
   constructor() {
-    this.progress = 100;
+    this.progress = 100; // TODO: progress?
     this.guesses = [];
 
     this.possibleGuesses = observable.set();
-    this.guessFitnessMap = observable.map();
-    this.guessSurvivorMapMap = observable.map();
+    // this.guessSurvivorMapMap = observable.map();
 
     [...answerList, ...guessList].forEach((word) => {
       this.possibleGuesses.add(word);
-      this.guessFitnessMap.set(word, 0);
-      // this.guessSurvivorMapMap.set([word, new Map()]);
     });
 
     this.possibleAnswers = observable.set(new Set(answerList));
-
-    this.updateFitnessAndSurvivorMap();
 
     makeAutoObservable(this);
   }
@@ -37,31 +32,25 @@ export class Store {
       word: guess,
       evaluation: this.evaluateGuess(guess),
     });
-
-    this.updateFitnessAndSurvivorMap();
   };
 
   // we'd like to only ever toggle the most recent guess
-  toggleLetterScore = (position) => {
+  toggleLetterScore = (position, forward) => {
     const oldEvaluation = this.lastGuess.evaluation;
     const newEvaluation = [...oldEvaluation];
 
     if (oldEvaluation[position] === "l") {
-      newEvaluation[position] = "p";
+      newEvaluation[position] = forward ? "p" : "0";
     } else if (oldEvaluation[position] === "p") {
-      newEvaluation[position] = "0";
+      newEvaluation[position] = forward ? "0" : "l";
     } else if (oldEvaluation[position] === "0") {
-      newEvaluation[position] = "l";
-    } else if (oldEvaluation[position] === "x") {
-      newEvaluation[position] = "l";
+      newEvaluation[position] = forward ? "l" : "p";
     }
 
     this.guesses[this.guesses.length - 1] = {
       ...this.lastGuess,
       evaluation: newEvaluation,
     };
-
-    this.updateFitnessAndSurvivorMap();
   };
 
   // This is simply for convenience. We can know some of them, and we can guess at the rest.
@@ -128,26 +117,32 @@ export class Store {
     return new Set(survivors);
   }
 
-  updateFitnessAndSurvivorMap = () => {
-    const possibleAnswers = [...this.possibleAnswers];
-    const total = this.possibleGuesses.size;
-
-    console.log(`calculating scores against ${total} possible answers...`);
+  get guessFitnessMap() {
+    console.log("calcing guessFitnessMap");
+    const result = new Map();
 
     [...this.possibleGuesses].forEach((word, index) => {
-      this.progress = (100 * (1 + index)) / total;
-      // get the fitness and survivormap of each word, but from different lists
       const { fitness } = getFitness(word, [...this.currentSurvivors]);
 
-      // TODO: actually, how often do we need to update scoresurvivormap?
-      const { scoresSurvivorsMap } = getFitness(word, possibleAnswers);
-
-      this.guessFitnessMap.set(word, fitness);
-      this.guessSurvivorMapMap.set(word, scoresSurvivorsMap);
+      result.set(word, fitness);
     });
 
-    console.log(`...done`);
+    return result;
   };
+
+
+
+  get guessSurvivorMapMap() {
+    console.log("calcing guessSurvivorMapMap");
+
+    const result = new Map();
+    [...this.possibleGuesses].forEach((word) => {
+      const { scoresSurvivorsMap } = getFitness(word, [...this.possibleAnswers]);
+      result.set(word, scoresSurvivorsMap);
+    });
+
+    return result;
+  }
 
   // the surviving possible guesses, scored and sorted
   get sortedGuessesAndScores() {

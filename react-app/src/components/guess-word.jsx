@@ -12,8 +12,8 @@ export const GuessWord = observer(({ word, score, toggleLetterScore }) => {
               key={index}
               letter={letter}
               evaluation={evaluation}
-              toggleLetter={() => {
-                toggleLetterScore(index);
+              toggleLetter={({forward}) => {
+                toggleLetterScore(index, forward);
               }}
             />
           );

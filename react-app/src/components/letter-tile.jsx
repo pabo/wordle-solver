@@ -1,18 +1,16 @@
-// import { useState } from "react";
-
 export const LetterTile = ({ letter, evaluation = "", toggleLetter }) => {
-  // const [explicitlySet, setExplicitlySet] = useState(false);
 
-  const handleToggle = () => {
-    // setExplicitlySet(true);
-    toggleLetter();
+  const handleToggle = (e) => {
+    e.preventDefault();
+    const forward = e.button === 0;
+    toggleLetter({forward});
   };
 
   return (
     <div
-      // className={`letter-tile ${evaluation} ${explicitlySet ? "" : "initial"}`}
       className={`letter-tile ${evaluation}`}
       onClick={handleToggle}
+      onContextMenu={handleToggle}
     >
       {letter}
     </div>
