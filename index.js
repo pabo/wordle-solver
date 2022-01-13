@@ -144,11 +144,9 @@ const go = async () => {
 
 const promptForInput = (text) => {
 	return new Promise((resolve, reject) => {
-		question(text).then(e => {
-			// lol wtf this is the failure case
-			resolve(undefined);
+		question(text).then(result => {
+			resolve(result);
 		}).catch(result => {
-			// lol wtf this is the success case
 			resolve(result);
 		});
 	});
