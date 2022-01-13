@@ -5,7 +5,8 @@ const { hideBin } = require('yargs/helpers')
 const tree = require('./trees/wordle.tree.json');
 const readline = require('readline')
 const util = require('util');
-const wordlistFile = 'wordlists/wordle.txt';
+const answerWordlistFile = 'wordlists/wordle_answers.txt';
+const guessWordlistFile = 'wordlists/wordle_guesses.txt';
 const treeFile = 'trees/wordle.tree.json';
 
 const argv = yargs(hideBin(process.argv)).argv;
@@ -38,9 +39,14 @@ let fileWritingEnabled = true;
 let guessCount = 0;
 
 const go = async () => {
-	const allWords = (await readFile(wordlistFile, {encoding: 'utf8'})).split("\n");
+	const guessWords = (await readFile(guessWordlistFile, {encoding: 'utf8'})).split("\n");
+	const answerWords = (await readFile(answerWordlistFile, {encoding: 'utf8'})).split("\n");
+	const allWords = [...guessWords, ...answerWords];
+	const allAnswers = [...answerWords];
+	const allGuesses = [...guessWords];
+
 	let words = [...allWords];
-	let possibleAnswers = pointer?.possibleAnswers || [...words];
+	let possibleAnswers = pointer?.possibleAnswers || [...answerWords];
 
 	while (possibleAnswers.length > 1) {
 		guessCount++; 
@@ -62,19 +68,22 @@ const go = async () => {
 		// go through every possible guess, pairing with every possible remaining word.
 		// for each above combo, score it, and find the next guess with the lowest (winning) fitness
 		words.some(possibleGuess => {
-			const {fitness, scores} = getFitness(possibleGuess, possibleAnswers);
+			if (possibleGuess) { // TODO: I think this just guards against the newline at the end of the wordlists
+				const {fitness, scores} = getFitness(possibleGuess, possibleAnswers);
 
-			if (!pointer.fitness) {
-				pointer.fitness = fitness;
-				winningScores = scores;
-				!automaticMode && console.log(`winning guess is ${possibleGuess} [${fitness}]`);
-			}
-			else if (fitness < pointer.fitness || pointer.bestGuess === possibleGuess) {
-				winningScores = scores;
+				if (!pointer.fitness) {
+					pointer.fitness = fitness;
+					pointer.bestGuess = possibleGuess;
+					winningScores = scores;
+					!automaticMode && console.log(`winning guess is ${possibleGuess} [${fitness}]`);
+				}
+				else if (fitness < pointer.fitness || pointer.bestGuess === possibleGuess) {
+					winningScores = scores;
 
-				pointer.fitness = fitness;
-				pointer.bestGuess = possibleGuess;
-				!automaticMode && console.log(`winning guess is ${possibleGuess} [${fitness}]`);
+					pointer.fitness = fitness;
+					pointer.bestGuess = possibleGuess;
+					!automaticMode && console.log(`winning guess is ${possibleGuess} [${fitness}]`);
+				}
 			}
 
 			// uncomment if you want to stop the word list loop early
@@ -154,7 +163,7 @@ const calculateFitness = function (scoresMap) {
 	const values = Array.from(scoresMap.values());
 	const counts = values.map(x => x.length)
 	const squares = counts.map(x => x*x);
-	const sum = squares.reduce((acum, val) => (acum + val));
+	const sum = squares.reduce((acum, val) => (acum + val), 0);
       
 	const mean = sum/numPossibilities
 	return Math.sqrt(mean);
