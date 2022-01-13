@@ -18,9 +18,13 @@ const GuessListWord = observer(
   }
 );
 
-const CandidateListWord = observer(({ word }) => {
+const CandidateListWord = observer(({ word, wordSelectedHandler }) => {
+  const handleClick = (e) => {
+    wordSelectedHandler(e.target.dataset.word);
+  };
+
   return (
-    <div className="candidate-word" data-word={word}>
+    <div className="candidate-word" data-word={word} onClick={handleClick}>
       {word}
     </div>
   );
@@ -46,13 +50,17 @@ export const GuessList = observer(({ words = [], wordSelectedHandler }) => {
   );
 });
 
-export const CandidateList = observer(({ words = [] }) => {
+export const CandidateList = observer(({ words = [], wordSelectedHandler }) => {
   return (
     <div className="candidate-list">
       <div className="header">{words.size} possible answers</div>
       <div className="wordlist">
         {[...words].map((word) => (
-          <CandidateListWord key={word} word={word} />
+          <CandidateListWord
+            key={word}
+            word={word}
+            wordSelectedHandler={wordSelectedHandler}
+          />
         ))}
       </div>
     </div>

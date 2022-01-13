@@ -1,9 +1,8 @@
 export const LetterTile = ({ letter, evaluation = "", toggleLetter }) => {
-
   const handleToggle = (e) => {
     e.preventDefault();
     const forward = e.button === 0;
-    toggleLetter({forward});
+    toggleLetter({ forward });
   };
 
   return (

@@ -9,7 +9,8 @@ export const App = observer(({ store }) => {
     sortedGuessesAndScores,
     addGuess,
     toggleLetterScore,
-    progress,
+    isLoadingFitness,
+    isLoadingSurvivorMap,
   } = store;
 
   const wordSelectedHandler = (word) => {
@@ -18,13 +19,17 @@ export const App = observer(({ store }) => {
 
   return (
     <div className="container">
-      {progress !== 100 && <div className="progress">{progress}</div>}
+      {isLoadingFitness && <div>Loading fitness...</div>}
+      {isLoadingSurvivorMap && <div>Loading survivor map...</div>}
       <Board guesses={guesses} toggleLetterScore={toggleLetterScore} />
       <GuessList
         words={sortedGuessesAndScores}
         wordSelectedHandler={wordSelectedHandler}
       />
-      <CandidateList words={currentSurvivors} />
+      <CandidateList
+        words={currentSurvivors}
+        wordSelectedHandler={wordSelectedHandler}
+      />
     </div>
   );
 });

@@ -1,13 +1,22 @@
 // import { list } from "./enable5.js";
 import { list as answerList } from "./wordle-answers";
 import { list as guessList } from "./wordle-guesses";
-import { observable, makeAutoObservable } from "mobx";
+import { runInAction, observable, makeAutoObservable } from "mobx";
 import { getFitness } from "./word-utils";
 
 export class Store {
   constructor() {
+    this.fitnessWorker = new Worker("word-utils-worker.js");
+    this.survivorWorker = new Worker("word-utils-worker.js");
+
     this.progress = 100; // TODO: progress?
     this.guesses = [];
+
+    this.guessFitnessMap = observable.map();
+    this.guessSurvivorMapMap = observable.map();
+
+    this.isLoadingFitness = false;
+    this.isLoadingSurvivorMap = false;
 
     this.possibleGuesses = observable.set();
     // this.guessSurvivorMapMap = observable.map();
@@ -17,6 +26,9 @@ export class Store {
     });
 
     this.possibleAnswers = observable.set(new Set(answerList));
+
+    this.updateGuessFitnessMap();
+    this.updateGuessSurvivorMapMap();
 
     makeAutoObservable(this);
   }
@@ -32,6 +44,9 @@ export class Store {
       word: guess,
       evaluation: this.evaluateGuess(guess),
     });
+
+    this.updateGuessFitnessMap();
+    this.updateGuessSurvivorMapMap();
   };
 
   // we'd like to only ever toggle the most recent guess
@@ -51,6 +66,8 @@ export class Store {
       ...this.lastGuess,
       evaluation: newEvaluation,
     };
+
+    this.updateGuessFitnessMap();
   };
 
   // This is simply for convenience. We can know some of them, and we can guess at the rest.
@@ -117,31 +134,39 @@ export class Store {
     return new Set(survivors);
   }
 
-  get guessFitnessMap() {
-    console.log("calcing guessFitnessMap");
-    const result = new Map();
+  updateGuessFitnessMap() {
+    this.fitnessWorker.postMessage({mode: "fitness", wordsToScore: [...this.possibleGuesses], wordsToScoreAgainst: [...this.currentSurvivors]});
+      // [...this.possibleGuesses].forEach((word, index) => {
+      //   const { fitness } = getFitness(word, [...this.currentSurvivors]);
 
-    [...this.possibleGuesses].forEach((word, index) => {
-      const { fitness } = getFitness(word, [...this.currentSurvivors]);
+      //   this.guessFitnessMap.set(word, fitness);
+      // });
+      this.fitnessWorker.onmessage = message => {
+        const { data: {mode, results}} = message;
 
-      result.set(word, fitness);
-    });
+        if (mode === 'fitness') {
+          console.log(`got back results from ${mode}`, results);
 
-    return result;
-  };
+          runInAction(() => {
+            this.guessFitnessMap = observable.map(results)
+          })
+        }
+      }
+  }
 
+  updateGuessSurvivorMapMap() {
+    this.survivorWorker.postMessage({mode: "survivors", wordsToScore: [...this.possibleGuesses], wordsToScoreAgainst: [...this.possibleAnswers]});
+      this.survivorWorker.onmessage = message => {
+        const { data: {mode, results}} = message;
 
+        if (mode === 'survivors') {
+          console.log(`got back results from ${mode}`, results);
 
-  get guessSurvivorMapMap() {
-    console.log("calcing guessSurvivorMapMap");
-
-    const result = new Map();
-    [...this.possibleGuesses].forEach((word) => {
-      const { scoresSurvivorsMap } = getFitness(word, [...this.possibleAnswers]);
-      result.set(word, scoresSurvivorsMap);
-    });
-
-    return result;
+          runInAction(() => {
+            this.guessSurvivorMapMap = observable.map(results)
+          })
+        }
+      }
   }
 
   // the surviving possible guesses, scored and sorted
