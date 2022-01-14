@@ -72,24 +72,33 @@ export class Store {
   evaluateGuess = (guess) => {
     // 1. KNOWN: if this letter has been guessed in this position before, then re-use the
     // evaluation.
-    // TODO: 2. GUESS: if this letter has been guessed in another position and resulted in a 'p',
-    // then we can se it to 'l'
+    // 2. GUESS: if this letter has been guessed in another position and resulted in a 'p' or 'l',
+    // then we can set it to 'l'
     // 3. default to 0
     const guessLetters = guess.split("");
-    let evaluation = ["0", "0", "0", "0", "0"];
+    let evaluationResult = ["0", "0", "0", "0", "0"];
 
-    this.guesses.forEach(
-      ({ word: previousWord, evaluation: previousEvaluation }) => {
-        previousWord.split("").forEach((previousWordLetter, index) => {
-          if (previousWordLetter === guessLetters[index]) {
-            // case 1 above
-            evaluation[index] = previousEvaluation[index];
-          }
-        });
-      }
-    );
+    guessLetters.forEach((guessLetter, index) => {
+      this.guesses.forEach(({ word, evaluation }) => {
+        // 1. KNOWN
+        if (word.charAt(index) === guessLetter) {
+          evaluationResult[index] = evaluation[index];
+          return true;
+        }
 
-    return evaluation;
+        // 2. GUESS
+        const foundIndex = word.indexOf(guessLetter);
+        if (
+          foundIndex !== -1 &&
+          evaluation[foundIndex] !== "0" &&
+          evaluationResult[index] !== "p"
+        ) {
+          evaluationResult[index] = "l";
+        }
+      });
+    });
+
+    return evaluationResult;
   };
 
   get lastGuess() {
@@ -113,14 +122,9 @@ export class Store {
     });
   };
 
-  // survivors, given all current info like soft evaluation
-  get currentSurvivors() {
-    return this.filteredPossibleAnswers;
-  }
-
   // TODO: for soft culling, we filter based on the last results from calculateGuessesAndScores,
   //  which now happens with every toggle. is this an issue?
-  get filteredPossibleAnswers() {
+  get currentSurvivors() {
     if (!this.lastGuess) {
       return this.possibleAnswers;
     }
@@ -130,6 +134,14 @@ export class Store {
       .get(this.lastGuessedEvaluation.join(""));
 
     return new Set(survivors);
+  }
+
+  get knownAnswer() {
+    if (this.currentSurvivors.size === 1) {
+      return [...this.currentSurvivors][0];
+    }
+
+    return "";
   }
 
   get isLoadingFitness() {

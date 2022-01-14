@@ -57,7 +57,7 @@ export const GuessList = observer(
   }
 );
 
-export const CandidateList = observer(({ words = [], wordSelectedHandler }) => {
+export const CandidateList = observer(({ words, wordSelectedHandler }) => {
   return (
     <div className="candidate-list">
       <div className="header">{words.size} possible answers</div>

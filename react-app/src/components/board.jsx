@@ -1,7 +1,7 @@
 import { GuessWord } from "./guess-word";
 import { observer } from "mobx-react-lite";
 
-export const Board = observer(({ guesses, toggleLetterScore }) => {
+export const Board = observer(({ guesses, toggleLetterScore, knownAnswer }) => {
   return (
     <div className="board">
       {guesses.map(({ word, evaluation }) => {
@@ -14,7 +14,7 @@ export const Board = observer(({ guesses, toggleLetterScore }) => {
           />
         );
       })}
-      <GuessWord />
+      <GuessWord knownAnswer={knownAnswer} />
     </div>
   );
 });

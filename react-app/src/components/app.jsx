@@ -11,6 +11,7 @@ export const App = observer(({ store }) => {
     toggleLetterScore,
     isLoadingFitness,
     isLoadingSurvivorMap,
+    knownAnswer,
   } = store;
 
   const wordSelectedHandler = (word) => {
@@ -20,7 +21,11 @@ export const App = observer(({ store }) => {
   return (
     <div className="container">
       {isLoadingSurvivorMap && <div>Loading survivor map...</div>}
-      <Board guesses={guesses} toggleLetterScore={toggleLetterScore} />
+      <Board
+        knownAnswer={knownAnswer}
+        guesses={guesses}
+        toggleLetterScore={toggleLetterScore}
+      />
       <GuessList
         isLoading={isLoadingFitness}
         words={sortedGuessesAndScores}
