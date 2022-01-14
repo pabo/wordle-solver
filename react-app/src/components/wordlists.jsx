@@ -1,4 +1,5 @@
 import { observer } from "mobx-react-lite";
+import BounceLoader from "react-spinners/BounceLoader";
 
 const GuessListWord = observer(
   ({ word, score, wordSelectedHandler = () => {}, isCandidate }) => {
@@ -30,25 +31,31 @@ const CandidateListWord = observer(({ word, wordSelectedHandler }) => {
   );
 });
 
-export const GuessList = observer(({ words = [], wordSelectedHandler }) => {
-  return (
-    <div className="guess-list">
-      <div className="header">Legal guesses, sorted by fitness</div>
-      <div className="wordlist">
-        {words.map(([word, score]) => {
-          return (
-            <GuessListWord
-              key={word}
-              word={word}
-              score={score}
-              wordSelectedHandler={wordSelectedHandler}
-            />
-          );
-        })}
+export const GuessList = observer(
+  ({ words = [], wordSelectedHandler, isLoading }) => {
+    return (
+      <div className="guess-list">
+        <div className="header">Legal guesses, sorted by fitness</div>
+        <div className="wordlist">
+          {isLoading ? (
+            <BounceLoader />
+          ) : (
+            words.map(([word, score]) => {
+              return (
+                <GuessListWord
+                  key={word}
+                  word={word}
+                  score={score}
+                  wordSelectedHandler={wordSelectedHandler}
+                />
+              );
+            })
+          )}
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
 export const CandidateList = observer(({ words = [], wordSelectedHandler }) => {
   return (

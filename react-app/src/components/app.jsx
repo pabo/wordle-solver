@@ -19,10 +19,10 @@ export const App = observer(({ store }) => {
 
   return (
     <div className="container">
-      {isLoadingFitness && <div>Loading fitness...</div>}
       {isLoadingSurvivorMap && <div>Loading survivor map...</div>}
       <Board guesses={guesses} toggleLetterScore={toggleLetterScore} />
       <GuessList
+        isLoading={isLoadingFitness}
         words={sortedGuessesAndScores}
         wordSelectedHandler={wordSelectedHandler}
       />

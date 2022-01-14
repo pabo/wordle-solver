@@ -2,20 +2,18 @@
 import { list as answerList } from "./wordle-answers";
 import { list as guessList } from "./wordle-guesses";
 import { runInAction, observable, makeAutoObservable } from "mobx";
-import { getFitness } from "./word-utils";
 
 export class Store {
   constructor() {
+    this.guesses = [];
+
     this.fitnessWorker = new Worker("word-utils-worker.js");
     this.survivorWorker = new Worker("word-utils-worker.js");
-
-    this.progress = 100; // TODO: progress?
-    this.guesses = [];
 
     this.guessFitnessMap = observable.map();
     this.guessSurvivorMapMap = observable.map();
 
-    this.isLoadingFitness = false;
+    this.outstandingLoadingWorkers = 0;
     this.isLoadingSurvivorMap = false;
 
     this.possibleGuesses = observable.set();
@@ -134,39 +132,51 @@ export class Store {
     return new Set(survivors);
   }
 
+  get isLoadingFitness() {
+    return this.outstandingLoadingWorkers > 0;
+  }
+
   updateGuessFitnessMap() {
-    this.fitnessWorker.postMessage({mode: "fitness", wordsToScore: [...this.possibleGuesses], wordsToScoreAgainst: [...this.currentSurvivors]});
-      // [...this.possibleGuesses].forEach((word, index) => {
-      //   const { fitness } = getFitness(word, [...this.currentSurvivors]);
+    this.outstandingLoadingWorkers++;
 
-      //   this.guessFitnessMap.set(word, fitness);
-      // });
-      this.fitnessWorker.onmessage = message => {
-        const { data: {mode, results}} = message;
+    this.fitnessWorker.onmessage = (message) => {
+      const {
+        data: { results },
+      } = message;
 
-        if (mode === 'fitness') {
-          console.log(`got back results from ${mode}`, results);
+      console.log(`got back results from fitness`, results);
 
-          runInAction(() => {
-            this.guessFitnessMap = observable.map(results)
-          })
-        }
-      }
+      runInAction(() => {
+        this.guessFitnessMap = observable.map(results);
+        this.outstandingLoadingWorkers--;
+      });
+    };
+
+    this.fitnessWorker.postMessage({
+      mode: "fitness",
+      wordsToScore: [...this.possibleGuesses],
+      wordsToScoreAgainst: [...this.currentSurvivors],
+    });
   }
 
   updateGuessSurvivorMapMap() {
-    this.survivorWorker.postMessage({mode: "survivors", wordsToScore: [...this.possibleGuesses], wordsToScoreAgainst: [...this.possibleAnswers]});
-      this.survivorWorker.onmessage = message => {
-        const { data: {mode, results}} = message;
+    this.survivorWorker.onmessage = (message) => {
+      const {
+        data: { results },
+      } = message;
 
-        if (mode === 'survivors') {
-          console.log(`got back results from ${mode}`, results);
+      console.log(`got back results from survivors`, results);
 
-          runInAction(() => {
-            this.guessSurvivorMapMap = observable.map(results)
-          })
-        }
-      }
+      runInAction(() => {
+        this.guessSurvivorMapMap = observable.map(results);
+      });
+    };
+
+    this.survivorWorker.postMessage({
+      mode: "survivor",
+      wordsToScore: [...this.possibleGuesses],
+      wordsToScoreAgainst: [...this.possibleAnswers],
+    });
   }
 
   // the surviving possible guesses, scored and sorted
