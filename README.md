@@ -1,6 +1,7 @@
 # wordle solver
 Solve the word puzzle at https://powerlanguage.co.uk/wordle/
 
+(also check out the [live web-based version of this solver](http://pabo.github.io/wordle-solver))
 ## Usage
 
 ### Normal mode
