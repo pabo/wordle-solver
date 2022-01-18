@@ -25,8 +25,21 @@ export class Store {
 
     this.possibleAnswers = observable.set(new Set(answerList));
 
-    this.updateGuessFitnessMap();
-    this.updateGuessSurvivorMapMap();
+    const localFitnessMap = localStorage.getItem("fitnessMap");
+    if (localFitnessMap) {
+      this.guessFitnessMap = observable.map(localFitnessMap);
+    }
+    else {
+      this.updateGuessFitnessMap({saveToCache: true});
+    }
+
+    const localSurvivorMapMap = localStorage.getItem("survivorMapMap");
+    if (localSurvivorMapMap) {
+      this.guessSurvivorMapMap = observable.map(localSurvivorMapMap);
+    }
+    else {
+      this.updateGuessSurvivorMapMap({saveToCache: true});
+    }
 
     makeAutoObservable(this);
   }
@@ -148,7 +161,7 @@ export class Store {
     return this.outstandingLoadingWorkers > 0;
   }
 
-  updateGuessFitnessMap() {
+  updateGuessFitnessMap({saveToCache}) {
     this.outstandingLoadingWorkers++;
 
     this.fitnessWorker.onmessage = (message) => {
@@ -160,6 +173,9 @@ export class Store {
 
       runInAction(() => {
         this.guessFitnessMap = observable.map(results);
+        if (saveToCache) {
+          window.localStorage.setItem("localFitnessMap", results)
+        }
         this.outstandingLoadingWorkers--;
       });
     };
@@ -171,7 +187,7 @@ export class Store {
     });
   }
 
-  updateGuessSurvivorMapMap() {
+  updateGuessSurvivorMapMap({saveToCache}) {
     this.survivorWorker.onmessage = (message) => {
       const {
         data: { results },
@@ -181,6 +197,9 @@ export class Store {
 
       runInAction(() => {
         this.guessSurvivorMapMap = observable.map(results);
+        if (saveToCache) {
+          window.localStorage.setItem("localSurvivorMapMap", results)
+        }
       });
     };
 
